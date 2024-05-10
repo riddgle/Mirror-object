@@ -1,0 +1,49 @@
+// Function to mirror the position of the selected object
+proc mirrorObject(string $axis) {
+    // Get selected object
+    string $selected[] = `ls -sl`;
+    if (size($selected) == 0) {
+        confirmDialog -title "Error" -message "Please select an object to mirror." -button "OK";
+        return;
+    }
+    
+    // Get translation values of the selected object
+    float $translate[] = `xform -q -ws -t $selected[0]`;
+    
+    // Mirror the position based on selected axis
+    float $mirroredX = $translate[0];
+    float $mirroredY = $translate[1];
+    float $mirroredZ = $translate[2];
+    
+    if ($axis == "XY") {
+        $mirroredX = -$translate[0];
+    } else if ($axis == "YZ") {
+        $mirroredY = -$translate[1];
+    } else if ($axis == "XZ") {
+        $mirroredZ = -$translate[2];
+    }
+    
+    // Create a duplicate of the selected object
+    string $mirrorObj[] = `duplicate -rr $selected[0]`;
+    
+    // Apply mirrored position to the duplicate object
+    xform -ws -t $mirroredX $mirroredY $mirroredZ $mirrorObj[0];
+}
+
+// Create UI
+if (`window -exists mirrorObjectWindow`)
+    deleteUI mirrorObjectWindow;
+
+window -title "Mirror Object" -widthHeight 200 150 mirrorObjectWindow;
+columnLayout -adjustableColumn true;
+
+// Dropdown menu to select axis
+optionMenu -label "Mirror Axis" mirrorAxisOptionMenu;
+menuItem -label "XY" -command "optionMenu -q -v mirrorAxisOptionMenu" "XY";
+menuItem -label "YZ" -command "optionMenu -q -v mirrorAxisOptionMenu" "YZ";
+menuItem -label "XZ" -command "optionMenu -q -v mirrorAxisOptionMenu" "XZ";
+
+// Button to trigger mirror object function
+button -label "Mirror Object" -command "mirrorObject(`optionMenu -q -v mirrorAxisOptionMenu`);" mirrorObjectButton;
+
+showWindow mirrorObjectWindow;
